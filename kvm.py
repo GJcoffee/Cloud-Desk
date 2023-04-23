@@ -1,25 +1,21 @@
+import os
 import libvirt
 import xml.etree.ElementTree as ET
 import random
+from conf.setting import vm_conf
 
 
 class VirtualMachine:
-    def __init__(self, name, memory=512, vcpu=1, disk_size=10, mac_address=None):
+    def __init__(self, name):
         """
         初始化虚拟机对象。
 
         Args:
             name (str): 虚拟机名称
-            memory (int, optional): 内存大小（MiB），默认为 512
-            vcpu (int, optional): 虚拟 CPU 数量， 默认为 1
-            disk_size (int, optional): 磁盘大小（GiB），默认为 10
         """
         self.name = name
-        self.memory = memory
-        self.vcpu = vcpu
-        self.disk_size = disk_size
-        self.mac_address = mac_address
         self.conn = libvirt.open()
+        self.domain = self.conn.lookupByName(name)
 
     def create(self, memory=512, vcpu=1, disk_size=30, mac_address=None, ip_address=None, port=8080, os='windows'):
         """
@@ -35,7 +31,7 @@ class VirtualMachine:
             :param port: 虚拟机端口
             :param ip_address: 虚拟机IP地址
             :param mac_address: 虚拟机MAC地址
-            :param disk_size: 虚拟机磁盘大小
+            :param disk_size: 虚拟机磁盘大小默认30G
             :param memory: 虚拟机内存大小
             :param vcpu: 虚拟机VCPU数量
         """
@@ -47,35 +43,24 @@ class VirtualMachine:
 
         # 根据操作系统选择镜像路径
         if os == 'windows':
-            image_path = '/var/lib/libvirt/images/windows.qcow2'
+            image_path = '/var/lib/libvirt/images/windows.iso'  # Windows 镜像文件路径
         elif os == 'linux':
-            image_path = '/var/lib/libvirt/images/linux.qcow2'
+            image_path = '/var/lib/libvirt/images/linux.iso'  # Linux 镜像文件路径
         else:
             raise ValueError("Invalid operating system. Supported values are 'windows' and 'linux'.")
 
+        disk_size = disk_size * 1024 * 1024 * 1024  # 磁盘大小30GB
+
+        # 验证并创建磁盘存放路径
+        disk_path = f'/var/lib/libvirt/VM/{self.name}/{self.name}.qcow2'  # 磁盘文件存放地址
+        if not os.path.exists(os.path.dirname(disk_path)):
+            os.makedirs(os.path.dirname(disk_path))
+
+        # ip配置
+        ip_conf = f"<listen type='network' address='{ip_address}' port='{port}'/>" if ip_address and port else ''
+
         # 定义虚拟机的 XML 描述
-        xml_desc = """
-            <domain type='kvm'>
-                <name>{}</name>
-                <memory unit='KiB'>{}</memory>
-                <vcpu placement='static'>{}</vcpu>
-                <devices>
-                    <disk type='file' device='disk'>
-                        <driver name='qemu' type='qcow2'/>
-                        <source file='{}'/>
-                        <target dev='vda' bus='virtio'/>
-                        <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
-                    </disk>
-                    <interface type='network'>
-                        <mac address='{}'/>
-                        <model type='virtio'/>
-                        <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
-                        {}
-                    </interface>
-                </devices>
-            </domain>
-        """.format(self.name, memory * 1024, vcpu, image_path, mac,
-                   f"<listen type='network' address='{ip_address}' port='{port}'/>" if ip_address and port else '')
+        xml_desc = vm_conf.format(self.name, memory * 1024, vcpu, disk_path, disk_size, mac, ip_conf, image_path)
 
         # 创建虚拟机并返回虚拟机对象
         domain = self.conn.createXML(xml_desc, 0)
@@ -139,3 +124,44 @@ class VirtualMachine:
         domain = self.conn.lookupByName(self.name)
         # 发送重启指令
         domain.reboot()
+
+    def is_running(self):
+        """
+        检查虚拟机是否运行中。
+
+        Returns:
+            bool: 如果虚拟机运行中返回 True，否则返回 False。
+        """
+        return self.domain.isActive()
+
+    def adjust_vm_config(self, memory=None, vcpu=None, disk_size=None):
+        """
+        调整虚拟机配置。
+
+        Args:
+            memory (int): 新的虚拟机内存大小（单位：MB）。
+            vcpu (int): 新的虚拟机VCPU数量。
+            disk_size (int): 新的虚拟机磁盘大小（单位：GB）。
+
+        Returns:
+            bool: 如果调整成功返回 True，否则返回 False。
+        """
+        if not self.is_running():
+            if memory is not None:
+                self.domain.xmlDesc().find('memory').text = str(memory * 1024)
+                self.domain.xmlDesc().find('currentMemory').text = str(memory * 1024)
+            if vcpu is not None:
+                self.domain.xmlDesc().find('vcpu').text = str(vcpu)
+            if disk_size is not None:
+                current_disk_size = self.domain.blockInfo('/var/lib/libvirt/images/windows.qcow2')[0] / (
+                            1024 * 1024 * 1024)
+                if disk_size > current_disk_size:
+                    self.domain.blockResize('/var/lib/libvirt/images/windows.qcow2', disk_size * 1024 * 1024 * 1024)
+                else:
+                    print("磁盘大小只能调大，不能调小。")
+                    return False
+            self.domain.reconnect(0)
+            return True
+        else:
+            print("虚拟机正在运行中，无法调整配置。")
+            return False
