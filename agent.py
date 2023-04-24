@@ -1,13 +1,17 @@
 from flask import Flask, request
-import requests
+from kvm import VirtualMachine
 
 app = Flask(__name__)
+
+# 控制节点的代理接口地址
+CONTROL_NODE_PROXY_URL = 'http://control_node_proxy'
+kvm = VirtualMachine()
 
 
 @app.route('/create_vm', methods=['POST'])
 def create_vm():
     """
-    创建虚拟机的接口
+    创建虚拟机的路由接口
     """
     # 获取请求参数
     vm_name = request.form.get('vm_name')
@@ -19,42 +23,105 @@ def create_vm():
     port = request.form.get('port')
     os = request.form.get('os')
 
-    # 根据请求参数进行虚拟机创建操作
-    # 这里可以调用服务器节点的相应函数或接口来执行实际的虚拟机创建操作
+    # 调用 KVM 类中的创建虚拟机方法
+    result = kvm.create(vm_name, memory, vcpu, disk_size, mac_address, ip_address, port, os)
 
     # 返回响应
-    return "虚拟机创建成功"
+    return result
 
 
 @app.route('/delete_vm', methods=['POST'])
 def delete_vm():
     """
-    删除虚拟机的接口
+    删除虚拟机的路由接口
     """
     # 获取请求参数
     vm_name = request.form.get('vm_name')
 
-    # 根据请求参数进行虚拟机删除操作
-    # 这里可以调用服务器节点的相应函数或接口来执行实际的虚拟机删除操作
+    # 调用 KVM 类中的删除虚拟机方法
+    result = kvm.delete(vm_name)
 
     # 返回响应
-    return "虚拟机删除成功"
+    return result
 
 
 @app.route('/connect_vm', methods=['POST'])
 def connect_vm():
     """
-    连接虚拟机的接口
+    连接虚拟机的路由接口
     """
     # 获取请求参数
     vm_name = request.form.get('vm_name')
 
-    # 根据请求参数进行虚拟机连接操作
-    # 这里可以调用服务器节点的相应函数或接口来执行实际的虚拟机连接操作
+    # 调用 KVM 类中的连接虚拟机方法
+    result = kvm.connect_rdp(vm_name)
 
     # 返回响应
-    return "虚拟机连接成功"
+    return result
+
+
+@app.route('/start_vm', methods=['POST'])
+def start_vm():
+    """
+    开启虚拟机的路由接口
+    """
+    # 获取请求参数
+    vm_name = request.form.get('vm_name')
+
+    # 调用 KVM 类中的开启虚拟机方法
+    result = kvm.start(vm_name)
+
+    # 返回响应
+    return result
+
+
+@app.route('/stop_vm', methods=['POST'])
+def stop_vm():
+    """
+    关闭虚拟机的路由接口
+    """
+    # 获取请求参数
+    vm_name = request.form.get('vm_name')
+
+    # 调用 KVM 类中的关闭虚拟机方法
+    result = kvm.shutdown(vm_name)
+
+    # 返回响应
+    return result
+
+
+@app.route('/reboot_vm', methods=['POST'])
+def reboot_vm():
+    """
+    重启虚拟机的路由接口
+    """
+    # 获取请求参数
+    vm_name = request.form.get('vm_name')
+
+    # 调用 KVM 类中的重启虚拟机方法
+    result = kvm.reboot(vm_name)
+
+    # 返回响应
+    return result
+
+
+@app.route('/adjust_vm', methods=['POST'])
+def adjust_vm():
+    """
+    调整虚拟机配置的路由接口
+    """
+    # 获取请求参数
+    vm_name = request.form.get('vm_name')
+    memory = request.form.get('memory', int)
+    vcpu = request.form.get('vcpu', int)
+    disk_size = request.form.get('disk_size', int)
+
+    # 调用 KVM 类中的调整虚拟机配置方法
+    result = kvm.adjust_vm_config(vm_name, memory, vcpu, disk_size)
+
+    # 返回响应
+    return result
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8081)
+    app.run(host='0.0.0.0', port=8080)

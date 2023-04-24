@@ -6,18 +6,16 @@ from conf.setting import vm_conf
 
 
 class VirtualMachine:
-    def __init__(self, name):
+    def __init__(self):
         """
         初始化虚拟机对象。
 
         Args:
             name (str): 虚拟机名称
         """
-        self.name = name
         self.conn = libvirt.open()
-        self.domain = self.conn.lookupByName(name)
 
-    def create(self, memory=512, vcpu=1, disk_size=30, mac_address=None, ip_address=None, port=8080, os='windows'):
+    def create(self, name, memory=512, vcpu=1, disk_size=30, mac_address=None, ip_address=None, port=8080, os='windows'):
         """
         创建虚拟机。
 
@@ -52,7 +50,7 @@ class VirtualMachine:
         disk_size = disk_size * 1024 * 1024 * 1024  # 磁盘大小30GB
 
         # 验证并创建磁盘存放路径
-        disk_path = f'/var/lib/libvirt/VM/{self.name}/{self.name}.qcow2'  # 磁盘文件存放地址
+        disk_path = f'/var/lib/libvirt/VM/{name}/{name}.qcow2'  # 磁盘文件存放地址
         if not os.path.exists(os.path.dirname(disk_path)):
             os.makedirs(os.path.dirname(disk_path))
 
@@ -60,20 +58,20 @@ class VirtualMachine:
         ip_conf = f"<listen type='network' address='{ip_address}' port='{port}'/>" if ip_address and port else ''
 
         # 定义虚拟机的 XML 描述
-        xml_desc = vm_conf.format(self.name, memory * 1024, vcpu, disk_path, disk_size, mac, ip_conf, image_path)
+        xml_desc = vm_conf.format(name, memory * 1024, vcpu, disk_path, disk_size, mac, ip_conf, image_path)
 
         # 创建虚拟机并返回虚拟机对象
         domain = self.conn.createXML(xml_desc, 0)
         return domain
 
-    def connect_rdp(self):
+    def connect_rdp(self, name):
         """
         连接已创建的虚拟机的 RDP。
 
         Returns:
             str: RDP 连接字符串，格式为 "rdp://<hostname>:<port>"
         """
-        domain = self.conn.lookupByName(self.name)
+        domain = self.conn.lookupByName(name)
         if domain.isActive() == 1:
             xml_desc = domain.XMLDesc()
             graphics_elem = ET.fromstring(xml_desc).find(".//devices/graphics[@type='rdp']")
@@ -85,56 +83,57 @@ class VirtualMachine:
         else:
             return "Virtual machine is not running."
 
-    def delete(self):
+    def delete(self, name):
         """
         删除已创建的虚拟机。
 
         Returns:
             str: 成功删除虚拟机的信息
         """
-        domain = self.conn.lookupByName(self.name)
+        domain = self.conn.lookupByName(name)
         if domain.isActive() == 1:
             domain.destroy()  # 先停止虚拟机
         domain.undefine()  # 删除虚拟机
-        return "Virtual machine {} has been deleted.".format(self.name)
+        return "Virtual machine {} has been deleted.".format(name)
 
-    def start(self):
+    def start(self, name):
         """
         开启虚拟机。
         """
         # 获取虚拟机对象
-        domain = self.conn.lookupByName(self.name)
+        domain = self.conn.lookupByName(name)
         # 发送启动指令
         domain.create()
 
-    def shutdown(self):
+    def shutdown(self, name):
         """
         关闭虚拟机。
         """
         # 获取虚拟机对象
-        domain = self.conn.lookupByName(self.name)
+        domain = self.conn.lookupByName(name)
         # 发送关机指令
         domain.shutdown()
 
-    def reboot(self):
+    def reboot(self, name):
         """
         重启虚拟机。
         """
         # 获取虚拟机对象
-        domain = self.conn.lookupByName(self.name)
+        domain = self.conn.lookupByName(name)
         # 发送重启指令
         domain.reboot()
 
-    def is_running(self):
+    def is_running(self, name):
         """
         检查虚拟机是否运行中。
 
         Returns:
             bool: 如果虚拟机运行中返回 True，否则返回 False。
         """
-        return self.domain.isActive()
+        domain = self.conn.lookupByName(name)
+        return domain.isActive()
 
-    def adjust_vm_config(self, memory=None, vcpu=None, disk_size=None):
+    def adjust_vm_config(self, name, memory=None, vcpu=None, disk_size=None):
         """
         调整虚拟机配置。
 
@@ -146,21 +145,22 @@ class VirtualMachine:
         Returns:
             bool: 如果调整成功返回 True，否则返回 False。
         """
-        if not self.is_running():
+        domain = self.conn.lookupByName(name)
+        if not self.is_running(name):
             if memory is not None:
-                self.domain.xmlDesc().find('memory').text = str(memory * 1024)
-                self.domain.xmlDesc().find('currentMemory').text = str(memory * 1024)
+                domain.xmlDesc().find('memory').text = str(memory * 1024)
+                domain.xmlDesc().find('currentMemory').text = str(memory * 1024)
             if vcpu is not None:
-                self.domain.xmlDesc().find('vcpu').text = str(vcpu)
+                domain.xmlDesc().find('vcpu').text = str(vcpu)
             if disk_size is not None:
-                current_disk_size = self.domain.blockInfo('/var/lib/libvirt/images/windows.qcow2')[0] / (
+                current_disk_size = domain.blockInfo('/var/lib/libvirt/images/windows.qcow2')[0] / (
                             1024 * 1024 * 1024)
                 if disk_size > current_disk_size:
-                    self.domain.blockResize('/var/lib/libvirt/images/windows.qcow2', disk_size * 1024 * 1024 * 1024)
+                    domain.blockResize('/var/lib/libvirt/images/windows.qcow2', disk_size * 1024 * 1024 * 1024)
                 else:
                     print("磁盘大小只能调大，不能调小。")
                     return False
-            self.domain.reconnect(0)
+            domain.reconnect(0)
             return True
         else:
             print("虚拟机正在运行中，无法调整配置。")
