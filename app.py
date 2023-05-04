@@ -1,9 +1,15 @@
 from flask import Flask, request
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Desktop
+from datetime import timedelta, datetime
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'secret_key'  # 配置加密密钥
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)  # 配置session过期时间为1小时
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://username:password@hostname/database'
+# 配置数据库变更时是否发送信号到应用
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 engine = create_engine('sqlite:///cloud_desktops.db')
 Session = sessionmaker(bind=engine)
 

@@ -1,3 +1,4 @@
+from control import app
 # 虚拟机配置模板
 vm_conf = """
 <domain type='kvm'>
@@ -27,3 +28,7 @@ vm_conf = """
         </disk>
     </devices>
 </domain>"""
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cloud_desk.db'  # 设置数据库连接URI
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = 'your_secret_key'  # 设置Flask应用的秘密密钥
