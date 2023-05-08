@@ -1,6 +1,7 @@
-from flask import request, jsonify
 import random
 import string
+import requests
+from flask import request, jsonify
 from db_model import db, User, VirtualMachine
 from app import app
 
@@ -35,12 +36,36 @@ def apply_vm():
     if is_vm_limit_reached(username):
         return jsonify({'message': 'You have reached the maximum limit of virtual machines.'}), 400
 
-    vm_name = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(8))  # 随机生成虚拟机名称
-    vm = VirtualMachine(name=vm_name, user_id=User.query.filter_by(username=username).first().id)  # 创建虚拟机记录
-    db.session.add(vm)
-    db.session.commit()
+    # 获取请求参数
+    vm_name = request.form.get('vm_name')
+    memory = request.form.get('memory')
+    vcpu = request.form.get('vcpu')
+    disk_size = request.form.get('disk_size')
+    mac_address = request.form.get('mac_address')
+    ip_address = request.form.get('ip_address')
+    port = request.form.get('port')
+    os = request.form.get('os')
 
-    return jsonify({'message': 'Virtual machine has been applied successfully.', 'vm_name': vm_name}), 200
+    # 向agent请求创建虚拟机
+    response = requests.post('http://agent/create_vm', data={
+        'vm_name': vm_name,
+        'memory': memory,
+        'vcpu': vcpu,
+        'disk_size': disk_size,
+        'mac_address': mac_address,
+        'ip_address': ip_address,
+        'port': port,
+        'os': os
+    })
+
+    if response.status_code == 200:
+        # 创建虚拟机记录
+        vm = VirtualMachine(name=vm_name, user_id=User.query.filter_by(username=username).first().id)
+        db.session.add(vm)
+        db.session.commit()
+        return jsonify({'message': 'Virtual machine created successfully.'}), 200
+    else:
+        return jsonify({'message': 'Failed to create virtual machine.'}), 500
 
 
 # 路由：获取当前用户已申请的虚拟机列表

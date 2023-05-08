@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from kvm import VirtualMachine
 
 app = Flask(__name__)
@@ -24,10 +24,10 @@ def create_vm():
     os = request.form.get('os')
 
     # 调用 KVM 类中的创建虚拟机方法
-    result = kvm.create(vm_name, memory, vcpu, disk_size, mac_address, ip_address, port, os)
+    kvm.create(vm_name, memory, vcpu, disk_size, mac_address, ip_address, port, os)
 
     # 返回响应
-    return result
+    return jsonify({'message': 'Virtual machine created successfully.'}), 200
 
 
 @app.route('/delete_vm', methods=['POST'])
@@ -42,7 +42,7 @@ def delete_vm():
     result = kvm.delete(vm_name)
 
     # 返回响应
-    return result
+    return 200
 
 
 @app.route('/connect_vm', methods=['POST'])
@@ -117,7 +117,10 @@ def adjust_vm():
     disk_size = request.form.get('disk_size', int)
 
     # 调用 KVM 类中的调整虚拟机配置方法
-    result = kvm.adjust_vm_config(vm_name, memory, vcpu, disk_size)
+    try:
+        kvm.adjust_vm_config(vm_name, memory, vcpu, disk_size)
+    except Exception:
+        raise
 
     # 返回响应
     return result

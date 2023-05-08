@@ -15,7 +15,7 @@ class VirtualMachine:
         """
         self.conn = libvirt.open()
 
-    def create(self, name, memory=512, vcpu=1, disk_size=30, mac_address=None, ip_address=None, port=8080, os='windows'):
+    def create(self, name, memory=512, vcpu=1, disk_size=30, mac_address=None, ip_address=None, port=8080, sys='windows'):
         """
         创建虚拟机。
 
@@ -40,9 +40,9 @@ class VirtualMachine:
             mac = ':'.join(['52'] + [f'{random.randint(0x00, 0xff):02x}' for _ in range(5)])
 
         # 根据操作系统选择镜像路径
-        if os == 'windows':
+        if sys == 'windows':
             image_path = '/var/lib/libvirt/images/windows.iso'  # Windows 镜像文件路径
-        elif os == 'linux':
+        elif sys == 'linux':
             image_path = '/var/lib/libvirt/images/linux.iso'  # Linux 镜像文件路径
         else:
             raise ValueError("Invalid operating system. Supported values are 'windows' and 'linux'.")

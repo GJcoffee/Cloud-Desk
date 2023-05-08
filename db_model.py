@@ -19,11 +19,17 @@ class User(db.Model):
         return '<User %r>' % self.username
 
 
-class VirtualMachine(db.model):
+class VirtualMachine(db.Model):
     __tablename__ = 'virtual_machines'
     id = Column(Integer, primary_key=True)
-    name = Column(String(255))
-    user_id = Column(Integer, ForeignKey('users.id'))
+    name = Column(String(20))
+    memory = Column(Integer)
+    vcpu = Column(Integer)
+    disk_size = Column(Integer)
+    mac_address = Column(String(100))
+    ip_address = Column(String(15))
+    port = Column(Integer)
+    os = Column(String(100))
 
 
 # 创建数据访问会话
