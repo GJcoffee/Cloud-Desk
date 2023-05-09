@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from kvm import VirtualMachine
+from utils.vm_utils import VirtualMachine
 
 app = Flask(__name__)
 
@@ -39,10 +39,10 @@ def delete_vm():
     vm_name = request.form.get('vm_name')
 
     # 调用 KVM 类中的删除虚拟机方法
-    result = kvm.delete(vm_name)
+    kvm.delete(vm_name)
 
     # 返回响应
-    return 200
+    return jsonify({'message': 'Virtual machine delete successfully.'}), 200
 
 
 @app.route('/connect_vm', methods=['POST'])
@@ -54,10 +54,10 @@ def connect_vm():
     vm_name = request.form.get('vm_name')
 
     # 调用 KVM 类中的连接虚拟机方法
-    result = kvm.connect_rdp(vm_name)
+    kvm.connect_rdp(vm_name)
 
     # 返回响应
-    return result
+    return jsonify({'message': 'Virtual machine connect successfully.'}), 200
 
 
 @app.route('/start_vm', methods=['POST'])
@@ -69,10 +69,10 @@ def start_vm():
     vm_name = request.form.get('vm_name')
 
     # 调用 KVM 类中的开启虚拟机方法
-    result = kvm.start(vm_name)
+    kvm.start(vm_name)
 
     # 返回响应
-    return result
+    return jsonify({'message': 'Virtual machine start successfully.'}), 200
 
 
 @app.route('/stop_vm', methods=['POST'])
@@ -84,10 +84,10 @@ def stop_vm():
     vm_name = request.form.get('vm_name')
 
     # 调用 KVM 类中的关闭虚拟机方法
-    result = kvm.shutdown(vm_name)
+    kvm.shutdown(vm_name)
 
     # 返回响应
-    return result
+    return jsonify({'message': 'Virtual machine close successfully.'}), 200
 
 
 @app.route('/reboot_vm', methods=['POST'])
@@ -99,10 +99,10 @@ def reboot_vm():
     vm_name = request.form.get('vm_name')
 
     # 调用 KVM 类中的重启虚拟机方法
-    result = kvm.reboot(vm_name)
+    kvm.reboot(vm_name)
 
     # 返回响应
-    return result
+    return jsonify({'message': 'Virtual machine reboot successfully.'}), 200
 
 
 @app.route('/adjust_vm', methods=['POST'])
@@ -123,7 +123,7 @@ def adjust_vm():
         raise
 
     # 返回响应
-    return result
+    return jsonify({'message': 'Virtual machine change successfully.'}), 200
 
 
 if __name__ == '__main__':

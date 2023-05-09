@@ -1,13 +1,12 @@
-import random
-import string
 import hashlib
-from flask import request, session, redirect, url_for, make_response
+from flask import request, session, redirect, url_for, make_response, Blueprint
 from datetime import timedelta, datetime
-from db_model import db_session, User
-from app import app
+from utils.db_model import db_session, User
+
+auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
-@app.before_request
+@auth_bp.before_request
 def before_request():
     if 'username' in session:
         last_active = session.get('last_active')
@@ -29,7 +28,7 @@ def before_request():
         return redirect(url_for('login'))
 
 
-@app.route('/login', methods=['GET', 'POST'])
+@auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     """用户登录接口"""
     if request.method == 'POST':
@@ -57,7 +56,7 @@ def login():
         '''
 
 
-@app.route('/logout')
+@auth_bp.route('/logout')
 def logout():
     """用户注销接口"""
     session.pop('username', None)
@@ -65,25 +64,8 @@ def logout():
     return redirect(url_for('login'))
 
 
-# 首次安装时生成 root 用户
-@app.before_first_request
-def create_root_user():
-    # 判断数据库是否存在 root 用户，如果存在则不创建
-    root_user = db_session.query(User).filter_by(username='root').first()
-    if not root_user:
-        # 随机生成用户名和密码
-        username = ''.join(random.choices(string.digits, k=10))
-        password = 'cloud@Desk'
-        # 对密码进行哈希加密
-        password_hash = hashlib.sha256(password.encode()).hexdigest()
-        # 创建 root 用户并保存到数据库
-        root_user = User(username=username, password=password_hash)
-        db_session.add(root_user)
-        db_session.commit()
-
-
 # 管理员账号创建普通用户
-@app.route('/api/create_user', methods=['POST'])
+@auth_bp.route('/api/create_user', methods=['POST'])
 def create_user():
     # 验证用户是否为管理员
     # 省略验证代码
