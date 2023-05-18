@@ -1,7 +1,10 @@
 import hashlib
-from flask import request, session, redirect, url_for, make_response, Blueprint
-from datetime import timedelta, datetime
-from utils.db_model import db_session, User
+from flask import request, session, redirect, url_for, make_response, Blueprint, render_template
+from datetime import timedelta
+import datetime
+from utils.db_model import User
+from conf.exsits import db
+from utils.time_utils import DateUtils
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -9,23 +12,23 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 @auth_bp.before_request
 def before_request():
     if 'username' in session:
-        last_active = session.get('last_active')
+        last_active = str(session.get('last_active'))[:19].replace('-', '').replace(' ', '').replace(':', '')
         if not last_active:
             # 如果是第一次请求，则记录当前时间为最后活跃时间
-            session['last_active'] = datetime.now()
+            session['last_active'] = int(DateUtils.get_current_format_time(date_format="%Y%m%d%H%M%S"))
         else:
             # 计算当前时间和最后活跃时间之间的差值
-            inactive_time = datetime.now() - last_active
-            if inactive_time > timedelta(minutes=60):
+            inactive_time = int(DateUtils.get_current_format_time(date_format="%Y%m%d%H%M%S")) - int(last_active)
+            if inactive_time > 100000000:
                 # 如果用户已经超过60分钟没有活动，则让用户自动登出
                 session.pop('username', None)
                 session.pop('last_active', None)
-                return redirect(url_for('login'))
+                return redirect(url_for('auth.login'))
         # 更新最后活跃时间
-        session['last_active'] = datetime.now()
-    elif request.endpoint != 'login':
+        session['last_active'] = int(DateUtils.get_current_format_time(date_format="%Y%m%d%H%M%S"))
+    elif request.endpoint != 'auth.login':
         # 用户未认证并且访问的不是登录接口，重定向到登录接口
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
@@ -36,24 +39,18 @@ def login():
         username = request.form['username']
         password = request.form['password']
         # 验证用户信息
-        user = db_session.query(User).filter_by(username=username, password=password).first()
+        user = db.session.query(User).filter_by(username=username, password=password).first()
         if user:
             # 认证成功，保存用户信息到session
             session['username'] = user.username
             session['is_admin'] = user.is_admin
-            return redirect(url_for('index'))
+            return vm_list()
         else:
             # 认证失败，返回错误提示
             return 'Invalid username or password'
     else:
         # 返回登录页面
-        return '''
-            <form method="post">
-                <input type="text" name="username" placeholder="username" required><br>
-                <input type="password" name="password" placeholder="password" required><br>
-                <input type="submit" value="Login">
-            </form>
-        '''
+        return render_template('login.html')
 
 
 @auth_bp.route('/logout')
@@ -78,6 +75,30 @@ def create_user():
     password_hash = hashlib.sha256(password.encode()).hexdigest()
     # 创建普通用户并保存到数据库
     user = User(username=username, password=password_hash)
-    db_session.add(user)
-    db_session.commit()
+    db.session.add(user)
+    db.session.commit()
     return make_response('User created', 200)
+
+
+def get_user_virtual_machines():
+    # 获取当前用户的用户名
+    username = session.get('username')
+
+    # 查询数据库以获取用户对象
+    user = User.query.filter_by(username=username).first()
+
+    # 如果用户存在，则获取用户拥有的虚拟机列表
+    if user:
+        virtual_machines = user.virtual_machines
+        return virtual_machines
+
+    # 如果用户不存在或未拥有任何虚拟机，则返回空列表
+    return []
+
+
+def vm_list():
+    # 获取用户虚拟机列表
+    virtual_machines = get_user_virtual_machines()
+
+    # 渲染虚拟机列表模板，并传递虚拟机列表作为参数
+    return render_template('vm_list.html', virtual_machines=virtual_machines)

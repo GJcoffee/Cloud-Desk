@@ -1,6 +1,7 @@
 import requests
 from flask import request, jsonify, Blueprint
-from utils.db_model import db, User, VirtualMachine
+from utils.db_model import User, VirtualMachine
+from conf.exsits import db
 
 vm_bp = Blueprint('vm', __name__, url_prefix='/vm')
 
