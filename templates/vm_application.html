@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>虚拟机申请</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .link-container {
+      text-align: right;
+      margin-bottom: 10px;
+      float: right;
+    }
+
+    .link-container a {
+      color: #555;
+      text-decoration: none;
+    }
+
+    form {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: bold;
+      color: #555;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
+
+    input[type="submit"] {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-top: 20px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    input[type="submit"]:hover {
+      background-color: #0056b3;
+    }
+  </style>
+  <script>
+    function displayAlert(message, status) {
+      if (status === 200) {
+        alert("桌面申请提交成功。");
+      } else if (status === 400) {
+        alert("您已达到虚拟机的最大限制。");
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const form = document.querySelector('form');
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        const xhr = new XMLHttpRequest();
+        const formData = new FormData(form);
+        xhr.open(form.method, form.action);
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === XMLHttpRequest.DONE) {
+            const response = JSON.parse(xhr.responseText);
+            displayAlert(response.message, xhr.status);
+          }
+        };
+        xhr.send(formData);
+      });
+    });
+  </script>
+</head>
+<body>
+  <div class="container">
+    <div class="link-container">
+      <a href="{{ url_for('vm.get_vms') }}">虚拟机列表</a>
+    </div>
+    <h1>云桌面申请</h1>
+    <form action="/vm/apply_vm" method="POST">
+      <label for="vm_name">桌面名称：</label>
+      <input type="text" id="vm_name" name="vm_name" required>
+      <br>
+      <label for="username">用户名：</label>
+      <input type="text" id="username" name="username" required>
+      <br>
+      <label for="password">密码：</label>
+      <input type="password" id="password" name="password" required>
+      <br>
+      <label for="memory">内存 (GB)：</label>
+      <input type="number" id="memory" name="memory" required>
+      <br>
+      <label for="vcpu">vCPU：</label>
+      <input type="number" id="vcpu" name="vcpu" required>
+      <br>
+      <label for="disk_size">磁盘大小 (GB)：</label>
+      <input type="number" id="disk_size" name="disk_size" required>
+      <br>
+      <label for="os">操作系统：</label>
+      <select id="os" name="os">
+        <option value="windows7">Windows 7</option>
+        <option value="windows8">Windows 8</option>
+        <option value="windows10">Windows 10</option>
+      </select>
+      <br>
+      <input type="submit" value="提交">
+    </form>
+  </div>
+</body>
+</html>

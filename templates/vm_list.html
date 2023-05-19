@@ -5,10 +5,142 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Virtual Machine List</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"> <!-- Font Awesome CSS -->
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    /* Branding colors */
+    :root {
+      --primary-color: #007bff;
+      --secondary-color: #0056b3;
+      --background-color: #f2f2f2;
+      --hover-color: #e6e6e6;
+      --active-color: #d9d9d9;
+    }
+
+    .info-bar {
+      background-color: var(--background-color);
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .vm-info-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .vm-info-list li {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .vm-info-list li:hover {
+      background-color: var(--hover-color);
+    }
+
+    .vm-info-list li.active {
+      background-color: var(--active-color);
+    }
+
+    .vm-name {
+      margin-left: 10px;
+    }
+
+    .vm-actions {
+      display: flex;
+      align-items: center;
+    }
+
+    .vm-actions i {
+      margin-right: 10px;
+      cursor: pointer;
+      color: var(--primary-color);
+      transition: color 0.3s ease;
+    }
+
+    .vm-actions i:hover {
+      color: var(--secondary-color);
+    }
+
+    .vm-details {
+      display: none;
+      background-color: var(--background-color);
+      padding: 20px;
+      margin-top: 20px;
+      border-radius: 5px;
+    }
+
+    .vm-details.active {
+      display: block;
+    }
+
+    .vm-details h2 {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    .vm-details p {
+      margin: 5px 0;
+    }
+
+    .apply-vm-link {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: var(--primary-color);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
+    }
+
+    .apply-vm-link:hover {
+      background-color: var(--secondary-color);
+    }
+
+    .apply-vm-icon {
+      vertical-align: middle;
+      margin-right: 5px;
+    }
+
+    .apply-vm-text {
+      vertical-align: middle;
+    }
+  </style>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      var vmItems = document.querySelectorAll(".vm-info-list li");
+      var vmDetails = document.querySelectorAll(".vm-details");
+
+      vmItems.forEach(function(item, index) {
+        item.addEventListener("click", function() {
+          // Remove active class from all items and details
+          vmItems.forEach(function(item) {
+            item.classList.remove("active");
+          });
+          vmDetails.forEach(function(detail) {
+            detail.classList.remove("active");
+          });
+
+          // Add active class to the clicked item and corresponding detail
+          item.classList.add("active");
+          vmDetails[index].classList.add("active");
+        });
+      });
+    });
+  </script>
 </head>
 <body>
   <header>
-    <h1>Virtual Machine List</h1>
+    <h1>云桌面使用示例</h1>
     <div class="user-info">
       <img src="user-avatar.png" alt="User Avatar" class="user-avatar">
       <span class="username">John Doe</span>
@@ -16,43 +148,35 @@
   </header>
 
   <main>
-    <table class="vm-list">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Memory</th>
-          <th>VCPU</th>
-          <th>Disk Size</th>
-          <th>MAC Address</th>
-          <th>IP Address</th>
-          <th>Port</th>
-          <th>OS</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>VM 1</td>
-          <td>8 GB</td>
-          <td>2</td>
-          <td>100 GB</td>
-          <td>00:11:22:33:44:55</td>
-          <td>192.168.1.100</td>
-          <td>8080</td>
-          <td>Linux</td>
-        </tr>
-        <tr>
-          <td>VM 2</td>
-          <td>16 GB</td>
-          <td>4</td>
-          <td>200 GB</td>
-          <td>AA:BB:CC:DD:EE:FF</td>
-          <td>192.168.1.101</td>
-          <td>8081</td>
-          <td>Windows</td>
-        </tr>
-        <!-- Add more rows for other virtual machines -->
-      </tbody>
-    </table>
+    <div class="info-bar">
+      <h2>云桌面列表</h2>
+      <ul class="vm-info-list">
+        {% for vm in virtual_machines %}
+        <li>
+          <span class="vm-ip">{{ vm.ip }}</span>
+          <span class="vm-name">{{ vm.name }}</span>
+          <div class="vm-actions">
+            <i class="fas fa-power-off"></i> <!-- 关机图标 -->
+            <i class="fas fa-sync-alt"></i> <!-- 重启图标 -->
+            <i class="fas fa-desktop"></i> <!-- RDP远程连接图标 -->
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    {% for vm in virtual_machines %}
+    <div class="vm-details">
+      <h2>{{ vm.name }} Details</h2>
+      <p>Memory: {{ vm.memory }} GB</p>
+      <p>VCPU: {{ vm.vcpu }}</p>
+      <p>Disk Size: {{ vm.disk_size }} GB</p>
+      <p>MAC Address: {{ vm.mac_address }}</p>
+      <p>IP Address: {{ vm.ip }}</p>
+      <p>Port: {{ vm.port }}</p>
+      <p>OS: {{ vm.os }}</p>
+    </div>
+    {% endfor %}
   </main>
 
   <footer>

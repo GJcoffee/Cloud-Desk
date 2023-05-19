@@ -12,7 +12,9 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 @auth_bp.before_request
 def before_request():
     if 'username' in session:
-        last_active = str(session.get('last_active'))[:19].replace('-', '').replace(' ', '').replace(':', '')
+        last_active = str(session.get('last_active'))[:19].replace('-', '').replace(' ', '').replace(':', '').replace(
+            'None', '')
+        last_active = last_active if last_active else 0
         if not last_active:
             # 如果是第一次请求，则记录当前时间为最后活跃时间
             session['last_active'] = int(DateUtils.get_current_format_time(date_format="%Y%m%d%H%M%S"))
@@ -31,6 +33,27 @@ def before_request():
         return redirect(url_for('auth.login'))
 
 
+@auth_bp.route('/approval-login', methods=['GET', 'POST'])
+def approval_login():
+    """审批登录接口"""
+    if request.method == 'POST':
+        # 获取用户提交的表单数据
+        username = request.form['username']
+        password = request.form['password']
+        # 验证用户信息
+        user = db.session.query(User).filter_by(username=username, password=password).first()
+        if user:
+            if user.is_admin or session['username'] == root:
+                # 管理员登录成功
+                session['username'] = user.username
+                session['is_admin'] = True
+                return redirect('/admin/dashboard')
+        else:
+            return
+    else:
+        return render_template('approve_login.html')
+
+
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     """用户登录接口"""
@@ -44,7 +67,15 @@ def login():
             # 认证成功，保存用户信息到session
             session['username'] = user.username
             session['is_admin'] = user.is_admin
-            return vm_list()
+
+            # 检查用户是否拥有虚拟机
+            virtual_machines = get_user_virtual_machines()
+            if len(virtual_machines) > 0:
+                # 用户拥有虚拟机，返回虚拟机列表页面
+                return vm_list()
+            else:
+                # 用户没有虚拟机，返回虚拟机申请页面
+                return render_template('vm_application.html')
         else:
             # 认证失败，返回错误提示
             return 'Invalid username or password'
@@ -70,11 +101,9 @@ def create_user():
     username = request.json.get('username')
     password = request.json.get('password')
     # 验证密码是否符合规则
-    # 省略验证代码
-    # 对密码进行哈希加密
-    password_hash = hashlib.sha256(password.encode()).hexdigest()
+
     # 创建普通用户并保存到数据库
-    user = User(username=username, password=password_hash)
+    user = User(username=username, password=password)
     db.session.add(user)
     db.session.commit()
     return make_response('User created', 200)

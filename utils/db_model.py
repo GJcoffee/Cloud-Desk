@@ -28,7 +28,19 @@ class VirtualMachine(db.Model):
     ip_address = Column(String(30))
     port = Column(Integer)
     os = Column(String(30))
+    desk_username = Column(String(30))
+    desk_password = Column(String(30))
     user_id = Column(Integer, ForeignKey('users.id'))
     users = relationship("User", back_populates="virtual_machines")
 
 
+class DesktopApplication(db.Model):
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    vm_name = db.Column(db.String(100))
+    username = db.Column(db.String(100))
+    password = db.Column(db.String(100))
+    memory = db.Column(db.Integer)
+    vcpu = db.Column(db.Integer)
+    disk_size = db.Column(db.Integer)
+    os = db.Column(db.String(100))
+    approval_status = db.Column(db.Integer, default=0)

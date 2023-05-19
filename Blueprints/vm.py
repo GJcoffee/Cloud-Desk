@@ -1,7 +1,8 @@
 import requests
-from flask import request, jsonify, Blueprint
-from utils.db_model import User, VirtualMachine
+from flask import request, jsonify, Blueprint, session
+from utils.db_model import User, VirtualMachine, DesktopApplication
 from conf.exsits import db
+from Blueprints.auth import vm_list
 
 vm_bp = Blueprint('vm', __name__, url_prefix='/vm')
 
@@ -27,24 +28,6 @@ def get_username_by_vm(vm_name):
 # 虚拟机数量是否已达到上限
 def is_vm_limit_reached(username):
     return get_vm_count(username) >= 3
-
-
-# 路由：申请虚拟机
-@vm_bp.route('/api/vm', methods=['POST'])
-def apply_vm():
-    username = request.cookies.get('username')  # 获取当前用户账号
-    if is_vm_limit_reached(username):
-        return jsonify({'message': 'You have reached the maximum limit of virtual machines.'}), 400
-
-    # 获取请求参数
-    vm_name = request.form.get('vm_name')
-    memory = request.form.get('memory')
-    vcpu = request.form.get('vcpu')
-    disk_size = request.form.get('disk_size')
-    mac_address = request.form.get('mac_address')
-    ip_address = request.form.get('ip_address')
-    port = request.form.get('port')
-    os = request.form.get('os')
 
 
 # 路由：获取当前用户已申请的虚拟机列表
@@ -108,13 +91,27 @@ def create_vm():
 # 路由：获取用户虚拟机列表
 @vm_bp.route('/api/vms', methods=['GET'])
 def get_vms():
-    username = request.args.get('username')
-    user = User.query.filter_by(username=username).first()
-    if not user:
-        return {'error': 'User not found'}, 404
+    return vm_list()
 
-    vms = [{'id': vm.id, 'name': vm.name} for vm in user.vms]
-    return {'vms': vms}
+
+# 路由：申请虚拟机
+@vm_bp.route('/apply_vm', methods=['POST'])
+def apply_vm():
+    username = session.get('username')  # 获取当前用户账号
+    if is_vm_limit_reached(username):
+        return jsonify({'message': 'You have reached the maximum limit of virtual machines.'}), 400
+    vm_name = request.form['vm_name']
+    username = request.form['username']
+    password = request.form['password']
+    memory = int(request.form['memory'])
+    vcpu = int(request.form['vcpu'])
+    disk_size = int(request.form['disk_size'])
+    os = request.form['os']
+
+    application = DesktopApplication(vm_name=vm_name, username=username, password=password, memory=memory, vcpu=vcpu, disk_size=disk_size, os=os)
+    db.session.add(application)
+    db.session.commit()
+    return jsonify({'message': 'Desktop application submitted successfully.'}), 200
 
 
 @vm_bp.route('/approve', methods=['POST'])
