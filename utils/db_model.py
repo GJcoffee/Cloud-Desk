@@ -36,9 +36,10 @@ class VirtualMachine(db.Model):
 
 class DesktopApplication(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    vm_name = db.Column(db.String(100))
     username = db.Column(db.String(100))
-    password = db.Column(db.String(100))
+    vm_name = db.Column(db.String(100))
+    desk_username = db.Column(db.String(100))
+    desk_password = db.Column(db.String(100))
     memory = db.Column(db.Integer)
     vcpu = db.Column(db.Integer)
     disk_size = db.Column(db.Integer)

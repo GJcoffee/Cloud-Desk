@@ -113,7 +113,7 @@
 <body>
     <div class="login-container">
         <h2>审批登录</h2>
-        <form action="/auth/login" method="POST" onsubmit="onSubmitForm(event)">
+        <form action="{{ url_for('auth.approval_login') }}" method="POST" >
             <div class="form-group">
                 <label for="username">用户名:</label>
                 <input type="text" id="username" name="username" required>

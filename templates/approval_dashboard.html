@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Virtual Machine Approval</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f5f5f5;
+        }
+
+        .approve-button, .reject-button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            color: #fff;
+        }
+
+        .approve-button {
+            background-color: #4CAF50;
+        }
+
+        .reject-button {
+            background-color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Virtual Machine Approval</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Applicant</th>
+                    <th>VM Name</th>
+                    <th>VM Type</th>
+                    <th>RAM</th>
+                    <th>Storage</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>John Doe</td>
+                    <td>VM-001</td>
+                    <td>Development</td>
+                    <td>8GB</td>
+                    <td>500GB</td>
+                    <td>
+                        <button class="approve-button">Approve</button>
+                        <button class="reject-button">Reject</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Jane Smith</td>
+                    <td>VM-002</td>
+                    <td>Testing</td>
+                    <td>4GB</td>
+                    <td>250GB</td>
+                    <td>
+                        <button class="approve-button">Approve</button>
+                        <button class="reject-button">Reject</button>
+                    </td>
+                </tr>
+                <!-- Add more rows for other VM applications -->
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

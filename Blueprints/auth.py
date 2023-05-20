@@ -9,6 +9,25 @@ from utils.time_utils import DateUtils
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
+def write_time(url='auth.login'):
+    last_active = str(session.get('last_active'))[:19].replace('-', '').replace(' ', '').replace(':', '').replace(
+        'None', '')
+    last_active = last_active if last_active else 0
+    if not last_active:
+        # 如果是第一次请求，则记录当前时间为最后活跃时间
+        session['last_active'] = int(DateUtils.get_current_format_time(date_format="%Y%m%d%H%M%S"))
+    else:
+        # 计算当前时间和最后活跃时间之间的差值
+        inactive_time = int(DateUtils.get_current_format_time(date_format="%Y%m%d%H%M%S")) - int(last_active)
+        if inactive_time > 100000000:
+            # 如果用户已经超过60分钟没有活动，则让用户自动登出
+            session.pop('username', None)
+            session.pop('last_active', None)
+            return redirect(url_for(url))
+    # 更新最后活跃时间
+    session['last_active'] = int(DateUtils.get_current_format_time(date_format="%Y%m%d%H%M%S"))
+
+
 @auth_bp.before_request
 def before_request():
     if 'username' in session:
@@ -25,15 +44,17 @@ def before_request():
                 # 如果用户已经超过60分钟没有活动，则让用户自动登出
                 session.pop('username', None)
                 session.pop('last_active', None)
-                return redirect(url_for('auth.login'))
+                return redirect(url_for(url))
         # 更新最后活跃时间
         session['last_active'] = int(DateUtils.get_current_format_time(date_format="%Y%m%d%H%M%S"))
+    elif request.endpoint == 'auth.approval_login':
+        return
     elif request.endpoint != 'auth.login':
         # 用户未认证并且访问的不是登录接口，重定向到登录接口
         return redirect(url_for('auth.login'))
 
 
-@auth_bp.route('/approval-login', methods=['GET', 'POST'])
+@auth_bp.route('/approval_login', methods=['GET', 'POST'])
 def approval_login():
     """审批登录接口"""
     if request.method == 'POST':
@@ -43,11 +64,13 @@ def approval_login():
         # 验证用户信息
         user = db.session.query(User).filter_by(username=username, password=password).first()
         if user:
-            if user.is_admin or session['username'] == root:
+            if user.is_admin or session['username'] == 'root':
                 # 管理员登录成功
                 session['username'] = user.username
                 session['is_admin'] = True
-                return redirect('/admin/dashboard')
+                # 从数据库检索需要审批的数据
+                applications = db.session.query(DesktopApplication).filter_by(status=0).all()
+                return render_template('approval_dashboard.html', applications=applications)
         else:
             return
     else:
