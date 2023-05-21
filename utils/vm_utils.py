@@ -62,7 +62,35 @@ class VirtualMachine:
 
         # 定义虚拟机的 XML 描述
         print(vm_conf)
-        xml_desc = vm_conf.format(name, memory * 1024, vcpu, disk_path, disk_size, mac, ip_conf, image_path)
+        xml_desc = f"""
+<domain type='kvm'>
+    <name>{name}</name>
+    <memory unit='KiB'>{memory * 1024}</memory>
+    <vcpu placement='static'>{vcpu}</vcpu>
+    <devices>
+        <disk type='file' device='disk'>
+            <driver name='qemu' type='qcow2'/>
+            <source file='{disk_path}'/>
+            <target dev='vda' bus='virtio'/>
+            <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+            <driver name='qemu' type='qcow2' size='{disk_size}'/>
+        </disk>
+        <interface type='network'>
+            <mac address='{mac}'/>
+            <model type='virtio'/>
+            <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+            {ip_conf}
+        </interface>
+        <disk type='file' device='cdrom'>
+            <driver name='qemu' type='raw'/>
+            <source file='{image_path}'/>
+            <target dev='vdb' bus='virtio'/>
+            <readonly/>
+            <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+        </disk>
+    </devices>
+</domain>"""
+        print(xml_desc)
         # 创建虚拟机并返回虚拟机对象
         domain = self.conn.createXML(xml_desc, 0)
 
