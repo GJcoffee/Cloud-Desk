@@ -31,20 +31,7 @@ def write_time(url='auth.login'):
 @auth_bp.before_request
 def before_request():
     if 'username' in session:
-        last_active = str(session.get('last_active'))[:19].replace('-', '').replace(' ', '').replace(':', '').replace(
-            'None', '')
-        last_active = last_active if last_active else 0
-        if not last_active:
-            # 如果是第一次请求，则记录当前时间为最后活跃时间
-            session['last_active'] = int(DateUtils.get_current_format_time(date_format="%Y%m%d%H%M%S"))
-        else:
-            # 计算当前时间和最后活跃时间之间的差值
-            inactive_time = int(DateUtils.get_current_format_time(date_format="%Y%m%d%H%M%S")) - int(last_active)
-            if inactive_time > 100000000:
-                # 如果用户已经超过60分钟没有活动，则让用户自动登出
-                session.pop('username', None)
-                session.pop('last_active', None)
-                return redirect(url_for(url))
+        write_time()
         # 更新最后活跃时间
         session['last_active'] = int(DateUtils.get_current_format_time(date_format="%Y%m%d%H%M%S"))
     elif request.endpoint == 'auth.approval_login':
@@ -90,6 +77,7 @@ def login():
             # 认证成功，保存用户信息到session
             session['username'] = user.username
             session['is_admin'] = user.is_admin
+            session['user_id'] = user.id
 
             # 检查用户是否拥有虚拟机
             virtual_machines = get_user_virtual_machines()
@@ -112,6 +100,7 @@ def logout():
     """用户注销接口"""
     session.pop('username', None)
     session.pop('is_admin', None)
+    session.pop('user_id', None)
     return redirect(url_for('login'))
 
 

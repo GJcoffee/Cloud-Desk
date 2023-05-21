@@ -15,7 +15,7 @@ class VirtualMachine:
         """
         self.conn = libvirt.open()
 
-    def create(self, name, memory=512, vcpu=1, disk_size=30, mac_address=None, ip_address=None, port=None, desk_username='administrator', desk_password='', sys='windows10'):
+    def create(self, name, memory=512, vcpu=1, disk_size=30, mac_address=None, ip_address=None, port=None, sys='windows10'):
         """
         创建虚拟机。
 
@@ -55,7 +55,7 @@ class VirtualMachine:
             os.makedirs(os.path.dirname(disk_path))
 
         # 生成随机端口
-        port = random.randint(1024, 65535)
+        port = port if port else random.randint(1024, 65535)
 
         # ip配置
         ip_conf = f"<listen type='network' address='{ip_address}' port='{port}'/>" if ip_address and port else ''
@@ -67,7 +67,17 @@ class VirtualMachine:
         domain = self.conn.createXML(xml_desc, 0)
 
         ip = self.get_vm_ip_address(domain)
-        return
+        ret_dict = {
+            'vm_name': name,
+            'memory': memory,
+            'vcpu': vcpu,
+            'disk_size': disk_size,
+            'mac_address': mac_address,
+            'ip_address': ip,
+            'port': port,
+            'os': os
+        }
+        return ret_dict
 
     def connect_rdp(self, name):
         """

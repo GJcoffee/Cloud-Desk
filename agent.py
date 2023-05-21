@@ -1,10 +1,11 @@
+import requests
 from flask import Flask, request, jsonify
 from utils.vm_utils import VirtualMachine
 
 app = Flask(__name__)
 
 # 控制节点的代理接口地址
-CONTROL_NODE_PROXY_URL = 'http://control_node_proxy'
+CONTROL_NODE_PROXY_URL = 'http://123.60.179.0:8000/'
 kvm = VirtualMachine()
 
 
@@ -25,10 +26,9 @@ def create_vm():
     os = data.get('os')
 
     # 调用 KVM 类中的创建虚拟机方法
-    kvm.create(vm_name, memory, vcpu, disk_size, mac_address, ip_address, port, os)
-
-    # 返回响应
-    return jsonify({'message': 'Virtual machine created successfully.'}), 200
+    data = kvm.create(vm_name, memory, vcpu, disk_size, mac_address, ip_address, port, os)
+    # 向agent请求创建虚拟机
+    return jsonify(data), 200
 
 
 @app.route('/delete_vm', methods=['POST'])

@@ -1,3 +1,5 @@
+import json
+
 import requests
 from flask import request, jsonify, Blueprint, session
 from utils.db_model import User, VirtualMachine, DesktopApplication
@@ -39,53 +41,27 @@ def get_vm():
 
 
 # 路由：删除虚拟机
-@vm_bp.route('/api/vm/<int:vm_id>', methods=['DELETE'])
-def delete_vm(vm_id):
-    vm = VirtualMachine.query.get_or_404(vm_id)  # 查询虚拟机信息
+@vm_bp.route('/api/delete_vm', methods=['POST'])
+def delete_vm():
+    # 获取请求参数
+    data = request.get_json()
+    vm_name = data.get('vm_name')
+
+    # 查询虚拟机信息
+    vm = VirtualMachine.query.filter_by(name=vm_name).first()
+    if not vm:
+        return {'error': 'Virtual machine not found'}, 404
+
     user = vm.user  # 查询虚拟机所属用户信息
 
-    if not user.is_admin and vm not in user.vms:
+    if not user.is_admin and vm not in user.virtual_machines:
         # 非管理员不能删除其他用户的虚拟机，普通用户只能删除自己的虚拟机
         return {'error': 'Unauthorized'}, 401
 
     db.session.delete(vm)  # 删除虚拟机
-    user.vm_count -= 1  # 用户虚拟机资源池余量加1
     db.session.commit()
 
-    return {'message': 'Deleted'}, 204
-
-
-# 路由：创建虚拟机
-@vm_bp.route('/api/vm', methods=['POST'])
-def create_vm():
-    username = request.form['username']
-    user = User.query.filter_by(username=username).first()
-    if not user:
-        return {'error': 'User not found'}, 404
-
-    if user.vm_count >= 3:
-        return {'error': 'VM count exceeded'}, 400
-
-    # 向agent请求创建虚拟机
-    response = requests.post('http://agent/create_vm', data={
-        'vm_name': vm_name,
-        'memory': memory,
-        'vcpu': vcpu,
-        'disk_size': disk_size,
-        'mac_address': mac_address,
-        'ip_address': ip_address,
-        'port': port,
-        'os': os
-    })
-
-    if response.status_code == 200:
-        # 创建虚拟机记录
-        vm = VirtualMachine(name=vm_name, user_id=User.query.filter_by(username=username).first().id)
-        db.session.add(vm)
-        db.session.commit()
-        return jsonify({'message': 'Virtual machine created successfully.'}), 200
-    else:
-        return jsonify({'message': 'Failed to create virtual machine.'}), 500
+    return {'message': 'Virtual machine deleted'}, 200
 
 
 # 路由：获取用户虚拟机列表
@@ -108,7 +84,8 @@ def apply_vm():
     disk_size = int(request.form['disk_size'])
     os = request.form['os']
 
-    application = DesktopApplication(vm_name=vm_name, username=username, desk_username=desk_username, desk_password=desk_password, memory=memory, vcpu=vcpu, disk_size=disk_size, os=os)
+    application = DesktopApplication(vm_name=vm_name, username=username, desk_username=desk_username,
+                                     desk_password=desk_password, memory=memory, vcpu=vcpu, disk_size=disk_size, os=os)
     db.session.add(application)
     db.session.commit()
     return jsonify({'message': 'Desktop application submitted successfully.'}), 200
@@ -117,8 +94,7 @@ def apply_vm():
 @vm_bp.route('/approve', methods=['POST'])
 def approve_vm():
     data = request.get_json()
-    user_name = data.get('user_name')
-    vm_name = data.get('vm_name')
+    user_name = data.get('username')
 
     # 查询用户
     user = User.query.get(user_name)
@@ -126,12 +102,12 @@ def approve_vm():
         return jsonify({'status': 'error', 'message': 'User not found'})
 
     # 查询用户当前的虚拟机数量
-    current_vms = VirtualMachine.query.filter_by(user_id=user_id).count()
+    current_vms = VirtualMachine.query.filter_by(user_id=user.id).count()
     if current_vms >= 3:
         return jsonify({'status': 'error', 'message': 'User has reached maximum number of virtual machines'})
 
     # 向agent请求创建虚拟机
-    response = requests.post('http://agent/create_vm', data={
+    response = requests.post('http://121.37.183.211:8080/create_vm', data={
         'vm_name': data.get('vm_name'),
         'memory': data.get('memory'),
         'vcpu': data.get('vcpu'),
@@ -141,10 +117,22 @@ def approve_vm():
         'port': data.get('port', ''),
         'os': data.get('os')
     })
+
     if response.status_code == 200:
         # 创建虚拟机
-        vm = VirtualMachine(name=vm_name, user_id=user_id)
+        data = json.loads(response.text)
+        vm = VirtualMachine(name=data.get('vm_name'),
+                            memory=data.get('memory'),
+                            vcpu=data.get('vcpu'),
+                            disk_size=data.get('disk_size'),
+                            mac_address=data.get('mac_address'),
+                            ip_address=data.get('ip_address'),
+                            port=data.get('port'),
+                            os=data.get('os'),
+                            desk_username=data.get('desk_username', 'root'),
+                            desk_password=data.get('desk_password', 'cloud@desk'),
+                            user_id=user.id)
         db.session.add(vm)
         db.session.commit()
 
-    return jsonify({'status': 'ok', 'message': 'Virtual machine created'})
+    return jsonify({'status': 'ok', 'message': 'Virtual machine created'}), 200
