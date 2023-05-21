@@ -102,12 +102,12 @@
         {% for application in applications %}
         document.getElementById('approve-{{ application.id }}').addEventListener('click', function() {
             var applicationId = this.getAttribute('data-application-id');
-            sendApprovalRequest(applicationId, 'approve');
+            sendApprovalRequest(application, 'approve');
         });
 
         document.getElementById('reject-{{ application.id }}').addEventListener('click', function() {
             var applicationId = this.getAttribute('data-application-id');
-            sendApprovalRequest(applicationId, 'reject');
+            sendApprovalRequest(application, 'reject');
         });
         {% endfor %}
 
