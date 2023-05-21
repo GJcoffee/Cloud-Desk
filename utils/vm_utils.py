@@ -67,27 +67,27 @@ class VirtualMachine:
         print(vm_conf)
         xml_desc = f"""
     <domain type='kvm'>
-        <name>{name}</name>
-        <memory unit='KiB'>{memory * 1024}</memory>
-        <vcpu placement='static'>{vcpu}</vcpu>
+        <name>{str(name)}</name>
+        <memory unit='KiB'>{str(memory * 1024)}</memory>
+        <vcpu placement='static'>{str(vcpu)}</vcpu>
         <devices>
             <disk type='file' device='disk'>
                 <driver name='qemu' type='qcow2'/>
-                <source file='{disk_path}'/>
+                <source file='{str(disk_path)}'/>
                 <target dev='vda' bus='virtio'/>
                 <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
-                <driver name='qemu' type='qcow2' size='{disk_size}'/>
+                <driver name='qemu' type='qcow2' size='{str(disk_size)}'/>
             </disk>
             <interface type='bridge'>
-                <mac address='{mac}'/>
+                <mac address='{str(mac)}'/>
                 <model type='virtio'/>
                 <source bridge='br0'/>  # 替换为实际的桥接接口名称
                 <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
-                {ip_conf}
+                {str(ip_conf)}
             </interface>
             <disk type='file' device='cdrom'>
                 <driver name='qemu' type='raw'/>
-                <source file='{image_path}'/>
+                <source file='{str(image_path)}'/>
                 <target dev='vdb' bus='virtio'/>
                 <readonly/>
                 <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
