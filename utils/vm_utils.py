@@ -38,7 +38,7 @@ class VirtualMachine:
             mac = mac_address
         else:
             mac = ':'.join(['52'] + [f'{random.randint(0x00, 0xff):02x}' for _ in range(5)])
-
+        print(1)
         # 根据操作系统选择镜像路径
         if sys == 'windows10':
             image_path = '/var/lib/libvirt/images/windows.iso'  # Windows 镜像文件路径
@@ -46,14 +46,14 @@ class VirtualMachine:
             image_path = '/var/lib/libvirt/images/linux.iso'  # Linux 镜像文件路径
         else:
             raise ValueError("Invalid operating system. Supported values are 'windows' and 'linux'.")
-
+        print(2)
         disk_size = disk_size * 1024 * 1024 * 1024  # 磁盘大小30GB
 
         # 验证并创建磁盘存放路径
         disk_path = f'/var/lib/libvirt/VM/{name}/{name}.qcow2'  # 磁盘文件存放地址
         if not os.path.exists(os.path.dirname(disk_path)):
             os.makedirs(os.path.dirname(disk_path))
-
+        print(disk_path)
         # 生成随机端口
         port = port if port else random.randint(1024, 65535)
 
@@ -62,7 +62,7 @@ class VirtualMachine:
 
         # 定义虚拟机的 XML 描述
         xml_desc = vm_conf.format(name, memory * 1024, vcpu, disk_path, disk_size, mac, ip_conf, image_path)
-
+        print(xml_desc)
         # 创建虚拟机并返回虚拟机对象
         domain = self.conn.createXML(xml_desc, 0)
 

@@ -132,7 +132,7 @@ def approve():
         return jsonify({'status': 'error', 'message': 'User has reached maximum number of virtual machines'})
 
     # 向agent请求创建虚拟机
-    response = requests.post('http://121.37.183.211:8080/create_vm', data={
+    response = requests.post('http://121.37.183.211:8080/create_vm', json={
         'vm_name': data.get('vm_name'),
         'memory': data.get('memory'),
         'vcpu': data.get('vcpu'),
