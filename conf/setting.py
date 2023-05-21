@@ -29,7 +29,7 @@ vm_conf = """
 </domain>"""
 
 # 数据库的配置信息
-HOSTNAME = "127.0.0.1"
+HOSTNAME = "172.17.0.2"
 PORT = "3306"
 DATABASE = "Cloud_Desk"
 USERNAME = 'root'
