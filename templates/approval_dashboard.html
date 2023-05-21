@@ -102,16 +102,16 @@
         {% for application in applications %}
         document.getElementById('approve-{{ application.id }}').addEventListener('click', function() {
             var applicationId = this.getAttribute('data-application-id');
-            sendApprovalRequest(application, 'approve');
+            sendApprovalRequest(applicationId, 'approve');
         });
 
         document.getElementById('reject-{{ application.id }}').addEventListener('click', function() {
             var applicationId = this.getAttribute('data-application-id');
-            sendApprovalRequest(application, 'reject');
+            sendApprovalRequest(applicationId, 'reject');
         });
         {% endfor %}
 
-        function sendApprovalRequest(application, action) {
+        function sendApprovalRequest(applicationId, action) {
             var xhr = new XMLHttpRequest();
             xhr.open('POST', '/approve', true);
             xhr.setRequestHeader('Content-Type', 'application/json');
@@ -130,15 +130,8 @@
                 }
             };
             var requestData = {
-                username: '{{ application.username }}',
-                vm_name: '{{ application.vm_name }}',
-                memory: '{{ application.memory }}',
-                vcpu: '{{ application.vcpu }}',
-                disk_size: '{{ application.disk_size }}',
-                mac_address: '{{ application.mac_address }}',
-                ip_address: '{{ application.ip_address }}',
-                port: '{{ application.port }}',
-                os: '{{ application.os }}'
+                applicationId: applicationId,
+                action: action
             };
             xhr.send(JSON.stringify(requestData));
         }
