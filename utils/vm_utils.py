@@ -3,6 +3,7 @@ import libvirt
 import xml.etree.ElementTree as ET
 import random
 from conf.setting import vm_conf
+from utils.network import generate_random_ip
 
 
 class VirtualMachine:
@@ -15,7 +16,8 @@ class VirtualMachine:
         """
         self.conn = libvirt.open()
 
-    def create(self, name, memory=512, vcpu=1, disk_size=30, mac_address=None, ip_address=None, port=None, sys='windows10'):
+    def create(self, name, memory=512, vcpu=1, disk_size=30, mac_address=None, ip_address=None, port=None,
+               sys='windows10'):
         """
         创建虚拟机。
 
@@ -58,38 +60,40 @@ class VirtualMachine:
         port = port if port else random.randint(1024, 65535)
 
         # ip配置
+        ip_address = ip_address if ip_address else generate_random_ip()
         ip_conf = f"<listen type='network' address='{ip_address}' port='{port}'/>" if ip_address and port else ''
 
         # 定义虚拟机的 XML 描述
         print(vm_conf)
         xml_desc = f"""
-<domain type='kvm'>
-    <name>{name}</name>
-    <memory unit='KiB'>{memory * 1024}</memory>
-    <vcpu placement='static'>{vcpu}</vcpu>
-    <devices>
-        <disk type='file' device='disk'>
-            <driver name='qemu' type='qcow2'/>
-            <source file='{disk_path}'/>
-            <target dev='vda' bus='virtio'/>
-            <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
-            <driver name='qemu' type='qcow2' size='{disk_size}'/>
-        </disk>
-        <interface type='network'>
-            <mac address='{mac}'/>
-            <model type='virtio'/>
-            <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
-            {ip_conf}
-        </interface>
-        <disk type='file' device='cdrom'>
-            <driver name='qemu' type='raw'/>
-            <source file='{image_path}'/>
-            <target dev='vdb' bus='virtio'/>
-            <readonly/>
-            <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
-        </disk>
-    </devices>
-</domain>"""
+    <domain type='kvm'>
+        <name>{name}</name>
+        <memory unit='KiB'>{memory * 1024}</memory>
+        <vcpu placement='static'>{vcpu}</vcpu>
+        <devices>
+            <disk type='file' device='disk'>
+                <driver name='qemu' type='qcow2'/>
+                <source file='{disk_path}'/>
+                <target dev='vda' bus='virtio'/>
+                <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+                <driver name='qemu' type='qcow2' size='{disk_size}'/>
+            </disk>
+            <interface type='bridge'>
+                <mac address='{mac}'/>
+                <model type='virtio'/>
+                <source bridge='br0'/>  # 替换为实际的桥接接口名称
+                <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+                {ip_conf}
+            </interface>
+            <disk type='file' device='cdrom'>
+                <driver name='qemu' type='raw'/>
+                <source file='{image_path}'/>
+                <target dev='vdb' bus='virtio'/>
+                <readonly/>
+                <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+            </disk>
+        </devices>
+    </domain>"""
         print(xml_desc)
         # 创建虚拟机并返回虚拟机对象
         domain = self.conn.createXML(xml_desc, 0)
@@ -103,7 +107,7 @@ class VirtualMachine:
             'mac_address': mac_address,
             'ip_address': ip,
             'port': port,
-            'os': os
+            'os': sys
         }
         return ret_dict
 
