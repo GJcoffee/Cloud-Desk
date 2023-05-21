@@ -14,7 +14,7 @@ class VirtualMachine:
         Args:
             name (str): 虚拟机名称
         """
-        # self.conn = libvirt.open()
+        self.conn = libvirt.open()
 
     def create(self, name, memory=4, vcpu=2, disk_size=30, mac_address=None, ip_address='172.16.0.1', port=None,
                sys='windows10'):
@@ -123,7 +123,7 @@ class VirtualMachine:
 #     </devices>
 # </domain>"""
 
-        创建虚拟机并返回虚拟机对象
+        # 创建虚拟机并返回虚拟机对象
         domain = self.conn.createXML(xml_desc, 0)
 
         ip = self.get_vm_ip_address(domain)
