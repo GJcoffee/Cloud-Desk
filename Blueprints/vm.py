@@ -64,6 +64,31 @@ def delete_vm():
     return {'message': 'Virtual machine deleted'}, 200
 
 
+# 路由：关闭虚拟机
+@vm_bp.route('/close_vm', methods=['POST'])
+def delete_vm():
+    # 获取请求参数
+    data = request.get_json()
+    vm_name = data.get('vm_name')
+
+    # 查询虚拟机信息
+    vm = VirtualMachine.query.filter_by(name=vm_name).first()
+    if not vm:
+        return {'error': 'Virtual machine not found'}, 404
+
+    user = vm.user  # 查询虚拟机所属用户信息
+
+    if not user.is_admin and vm not in user.virtual_machines:
+        # 非管理员不能删除其他用户的虚拟机，普通用户只能删除自己的虚拟机
+        return {'error': 'Unauthorized'}, 401
+
+    # 向agent请求创建虚拟机
+    response = requests.post('http://121.37.183.211:8080/stop_vm', data={'vm_name': data.get('vm_name')})
+    if response.status_code == 200:
+        return {'message': 'Virtual machine closed'}, 200
+    return {'message': 'Virtual machine close failed'}
+
+
 # 路由：获取用户虚拟机列表
 @vm_bp.route('/api/vms', methods=['GET'])
 def get_vms():
