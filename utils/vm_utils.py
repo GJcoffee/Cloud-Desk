@@ -61,8 +61,8 @@ class VirtualMachine:
         ip_conf = f"<listen type='network' address='{ip_address}' port='{port}'/>" if ip_address and port else ''
 
         # 定义虚拟机的 XML 描述
+        print(vm_conf)
         xml_desc = vm_conf.format(name, memory * 1024, vcpu, disk_path, disk_size, mac, ip_conf, image_path)
-        print(xml_desc)
         # 创建虚拟机并返回虚拟机对象
         domain = self.conn.createXML(xml_desc, 0)
 
