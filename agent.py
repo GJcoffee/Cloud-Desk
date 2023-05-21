@@ -27,7 +27,7 @@ def create_vm():
     os = data.get('os')
 
     # 调用 KVM 类中的创建虚拟机方法
-    data = kvm.create(vm_name, memory, vcpu, disk_size, mac_address, ip_address, port, os)
+    data = kvm.create(vm_name, memory=memory, vcpu=vcpu, disk_size=disk_size, mac_address=mac_address, ip_address=ip_address, port=port, sys=os)
     # 向agent请求创建虚拟机
     return jsonify(data), 200
 
