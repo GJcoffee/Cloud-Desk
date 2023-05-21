@@ -69,6 +69,9 @@ class VirtualMachine:
     <name>test</name>
     <memory unit='KiB'>4194304</memory>
     <vcpu placement='static'>2</vcpu>
+    <os>
+        <type arch='x86_64' machine='pc-i440fx-2.12'>hvm</type>
+    </os>
     <devices>
         <disk type='file' device='disk'>
             <driver name='qemu' type='qcow2'/>
