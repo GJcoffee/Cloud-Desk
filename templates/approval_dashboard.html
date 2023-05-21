@@ -88,8 +88,8 @@
                     <td>{{ application.desk_username }}</td>
                     <td>{{ application.desk_password }}</td>
                     <td>
-                        <button class="approve-button" id="approve-{{ application.id }}">Approve</button>
-                        <button class="reject-button" id="reject-{{ application.id }}">Reject</button>
+                        <button class="approve-button" id="approve-{{ application.id }}" data-application-id="{{ application.id }}">Approve</button>
+                        <button class="reject-button" id="reject-{{ application.id }}" data-application-id="{{ application.id }}">Reject</button>
                     </td>
                 </tr>
                 {% endfor %}
@@ -101,13 +101,64 @@
         // Add event listeners for approve and reject buttons
         {% for application in applications %}
         document.getElementById('approve-{{ application.id }}').addEventListener('click', function() {
-            // Handle approve action for application ID: {{ application.id }}
+            var applicationId = this.getAttribute('data-application-id');
+            sendApprovalRequest(applicationId, 'approve');
         });
 
         document.getElementById('reject-{{ application.id }}').addEventListener('click', function() {
-            // Handle reject action for application ID: {{ application.id }}
+            var applicationId = this.getAttribute('data-application-id');
+            sendApprovalRequest(applicationId, 'reject');
         });
         {% endfor %}
+
+        function sendApprovalRequest(applicationId, action) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/approve', true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        // 请求成功
+                        var response = JSON.parse(xhr.responseText);
+                        // 处理响应数据
+                        // ...
+                    } else {
+                        // 请求失败
+                        var errorMessage = '虚拟机创建失败，请重试！'; // 可根据实际需求修改错误提示信息
+                        displayErrorMessage(errorMessage);
+                    }
+                }
+            };
+            var requestData = {
+                username: '{{ current_user.username }}',
+                vm_name: '{{ application.vm_name }}',
+                memory: '{{ application.memory }}',
+                vcpu: '{{ application.vcpu }}',
+                disk_size: '{{ application.disk_size }}',
+                mac_address: '{{ application.mac_address }}',
+                ip_address: '{{ application.ip_address }}',
+                port: '{{ application.port }}',
+                os: '{{ application.os }}'
+            };
+            xhr.send(JSON.stringify(requestData));
+        }
+
+        function displayErrorMessage(errorMessage) {
+            // 创建并显示错误弹窗
+            var errorContainer = document.createElement('div');
+            errorContainer.className = 'error-container';
+            errorContainer.textContent = errorMessage;
+
+            // 添加到页面中
+            var body = document.getElementsByTagName('body')[0];
+            body.appendChild(errorContainer);
+
+            // 3 秒后自动移除错误弹窗
+            setTimeout(function() {
+                body.removeChild(errorContainer);
+            }, 3000);
+        }
     </script>
+
 </body>
 </html>
