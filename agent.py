@@ -5,7 +5,7 @@ from utils.vm_utils import VirtualMachine
 app = Flask(__name__)
 
 # 控制节点的代理接口地址
-CONTROL_NODE_PROXY_URL = 'http://123.60.179.0:8000/'
+CONTROL_NODE_PROXY_URL = 'http://123.60.179.0:8000'
 kvm = VirtualMachine()
 
 
@@ -16,6 +16,7 @@ def create_vm():
     """
     # 获取请求参数
     data = request.get_json()
+    print(data)
     vm_name = data.get('vm_name')
     memory = data.get('memory')
     vcpu = data.get('vcpu')

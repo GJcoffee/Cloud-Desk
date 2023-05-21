@@ -117,12 +117,12 @@ def apply_vm():
 
 
 @vm_bp.route('/approve', methods=['POST'])
-def approve_vm():
+def approve():
     data = request.get_json()
     user_name = data.get('username')
 
     # 查询用户
-    user = User.query.get(user_name)
+    user = User.query.filter_by(username=user_name).first()
     if not user:
         return jsonify({'status': 'error', 'message': 'User not found'})
 

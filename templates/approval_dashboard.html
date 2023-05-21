@@ -100,18 +100,40 @@
     <script>
         // Add event listeners for approve and reject buttons
         {% for application in applications %}
-        document.getElementById('approve-{{ application.id }}').addEventListener('click', function() {
-            var applicationId = this.getAttribute('data-application-id');
-            sendApprovalRequest(applicationId, 'approve');
-        });
+        (function(application) {
+            document.getElementById('approve-{{ application.id }}').addEventListener('click', function() {
+                var applicationId = this.getAttribute('data-application-id');
+                sendApprovalRequest(applicationId, 'approve', {
+                    username: '{{ application.username }}',
+                    vm_name: '{{ application.vm_name }}',
+                    memory: '{{ application.memory }}',
+                    vcpu: '{{ application.vcpu }}',
+                    disk_size: '{{ application.disk_size }}',
+                    mac_address: '{{ application.mac_address }}',
+                    ip_address: '{{ application.ip_address }}',
+                    port: '{{ application.port }}',
+                    os: '{{ application.os }}'
+                });
+            });
 
-        document.getElementById('reject-{{ application.id }}').addEventListener('click', function() {
-            var applicationId = this.getAttribute('data-application-id');
-            sendApprovalRequest(applicationId, 'reject');
-        });
+            document.getElementById('reject-{{ application.id }}').addEventListener('click', function() {
+                var applicationId = this.getAttribute('data-application-id');
+                sendApprovalRequest(applicationId, 'reject', {
+                    username: '{{ application.username }}',
+                    vm_name: '{{ application.vm_name }}',
+                    memory: '{{ application.memory }}',
+                    vcpu: '{{ application.vcpu }}',
+                    disk_size: '{{ application.disk_size }}',
+                    mac_address: '{{ application.mac_address }}',
+                    ip_address: '{{ application.ip_address }}',
+                    port: '{{ application.port }}',
+                    os: '{{ application.os }}'
+                });
+            });
+        })({{ application.id }});
         {% endfor %}
 
-        function sendApprovalRequest(applicationId, action) {
+        function sendApprovalRequest(applicationId, action, application) {
             var xhr = new XMLHttpRequest();
             xhr.open('POST', '/vm/approve', true);
             xhr.setRequestHeader('Content-Type', 'application/json');
@@ -129,11 +151,7 @@
                     }
                 }
             };
-            var requestData = {
-                applicationId: applicationId,
-                action: action
-            };
-            xhr.send(JSON.stringify(requestData));
+            xhr.send(JSON.stringify(application));
         }
 
         function displayErrorMessage(errorMessage) {
