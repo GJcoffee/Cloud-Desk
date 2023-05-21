@@ -66,7 +66,7 @@ def delete_vm():
 
 # 路由：关闭虚拟机
 @vm_bp.route('/close_vm', methods=['POST'])
-def delete_vm():
+def close_vm():
     # 获取请求参数
     data = request.get_json()
     vm_name = data.get('vm_name')
