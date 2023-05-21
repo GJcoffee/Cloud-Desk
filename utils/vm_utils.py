@@ -66,36 +66,36 @@ class VirtualMachine:
         # 定义虚拟机的 XML 描述
         print(vm_conf)
         xml_desc = f"""
-    <domain type='kvm'>
-        <name>{str(name)}</name>
-        <memory unit='KiB'>{str(memory * 1024)}</memory>
-        <vcpu placement='static'>{str(vcpu)}</vcpu>
-        <devices>
-            <disk type='file' device='disk'>
-                <driver name='qemu' type='qcow2'/>
-                <source file='{str(disk_path)}'/>
-                <target dev='vda' bus='virtio'/>
-                <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
-                <driver name='qemu' type='qcow2' size='{str(disk_size)}'/>
-            </disk>
-            <interface type='bridge'>
-                <mac address='{str(mac)}'/>
-                <model type='virtio'/>
-                <source bridge='br0'/>  # 替换为实际的桥接接口名称
-                <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
-                {str(ip_conf)}
-            </interface>
-            <disk type='file' device='cdrom'>
-                <driver name='qemu' type='raw'/>
-                <source file='{str(image_path)}'/>
-                <target dev='vdb' bus='virtio'/>
-                <readonly/>
-                <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
-            </disk>
-        </devices>
-    </domain>"""
+<domain type='kvm'>
+    <name>{str(name)}</name>
+    <memory unit='KiB'>{str(memory * 1024)}</memory>
+    <vcpu placement='static'>{str(vcpu)}</vcpu>
+    <devices>
+        <disk type='file' device='disk'>
+            <driver name='qemu' type='qcow2'/>
+            <source file='{str(disk_path)}'/>
+            <target dev='vda' bus='virtio'/>
+            <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+            <driver name='qemu' type='qcow2' size='{str(disk_size)}'/>
+        </disk>
+        <interface type='bridge'>
+            <mac address='{str(mac)}'/>
+            <model type='virtio'/>
+            <source bridge='br0'/>
+            <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+            {str(ip_conf)}
+        </interface>
+        <disk type='file' device='cdrom'>
+            <driver name='qemu' type='raw'/>
+            <source file='{str(image_path)}'/>
+            <target dev='vdb' bus='virtio'/>
+            <readonly/>
+            <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+        </disk>
+    </devices>
+</domain>"""
         print(xml_desc)
-        # 创建虚拟机并返回虚拟机对象
+        创建虚拟机并返回虚拟机对象
         domain = self.conn.createXML(xml_desc, 0)
 
         ip = self.get_vm_ip_address(domain)
@@ -245,3 +245,4 @@ class VirtualMachine:
                 return ip_address
 
         return None
+

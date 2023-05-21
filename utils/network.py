@@ -5,6 +5,7 @@ import fcntl
 import struct
 import os
 
+
 def get_host_network_info():
     # 获取默认网络接口
     default_interface = os.environ.get('DEFAULT_INTERFACE', 'eth0')
