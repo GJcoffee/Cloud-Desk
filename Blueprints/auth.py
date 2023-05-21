@@ -2,7 +2,7 @@ import hashlib
 from flask import request, session, redirect, url_for, make_response, Blueprint, render_template
 from datetime import timedelta
 import datetime
-from utils.db_model import User
+from utils.db_model import User, DesktopApplication
 from conf.exsits import db
 from utils.time_utils import DateUtils
 
@@ -64,12 +64,12 @@ def approval_login():
         # 验证用户信息
         user = db.session.query(User).filter_by(username=username, password=password).first()
         if user:
-            if user.is_admin or session['username'] == 'root':
+            if user.is_admin or username == 'root':
                 # 管理员登录成功
                 session['username'] = user.username
                 session['is_admin'] = True
                 # 从数据库检索需要审批的数据
-                applications = db.session.query(DesktopApplication).filter_by(status=0).all()
+                applications = db.session.query(DesktopApplication).filter_by(approval_status=0).all()
                 return render_template('approval_dashboard.html', applications=applications)
         else:
             return

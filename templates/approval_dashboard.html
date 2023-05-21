@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Virtual Machine Approval</title>
+    <title>云桌面申请审批</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -17,6 +17,7 @@
 
         h1 {
             text-align: center;
+            margin-bottom: 20px;
         }
 
         table {
@@ -33,6 +34,7 @@
 
         th {
             background-color: #f5f5f5;
+            font-weight: bold;
         }
 
         .approve-button, .reject-button {
@@ -41,6 +43,7 @@
             border-radius: 3px;
             cursor: pointer;
             color: #fff;
+            transition: background-color 0.3s ease;
         }
 
         .approve-button {
@@ -50,48 +53,61 @@
         .reject-button {
             background-color: #f44336;
         }
+
+        .approve-button:hover, .reject-button:hover {
+            background-color: #45a049;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Virtual Machine Approval</h1>
+        <h1>云桌面申请审批</h1>
         <table>
             <thead>
                 <tr>
                     <th>Applicant</th>
-                    <th>VM Name</th>
-                    <th>VM Type</th>
-                    <th>RAM</th>
+                    <th>Host Name</th>
+                    <th>VCPU</th>
+                    <th>OS</th>
+                    <th>Memory</th>
                     <th>Storage</th>
+                    <th>Desk Username</th>
+                    <th>Desk Password</th>
                     <th>Action</th>
                 </tr>
             </thead>
             <tbody>
+                {% for application in applications %}
                 <tr>
-                    <td>John Doe</td>
-                    <td>VM-001</td>
-                    <td>Development</td>
-                    <td>8GB</td>
-                    <td>500GB</td>
+                    <td>{{ application.username }}</td>
+                    <td>{{ application.vm_name }}</td>
+                    <td>{{ application.vcpu }}</td>
+                    <td>{{ application.os }}</td>
+                    <td>{{ application.memory }}GB</td>
+                    <td>{{ application.disk_size }}GB</td>
+                    <td>{{ application.desk_username }}</td>
+                    <td>{{ application.desk_password }}</td>
                     <td>
-                        <button class="approve-button">Approve</button>
-                        <button class="reject-button">Reject</button>
+                        <button class="approve-button" id="approve-{{ application.id }}">Approve</button>
+                        <button class="reject-button" id="reject-{{ application.id }}">Reject</button>
                     </td>
                 </tr>
-                <tr>
-                    <td>Jane Smith</td>
-                    <td>VM-002</td>
-                    <td>Testing</td>
-                    <td>4GB</td>
-                    <td>250GB</td>
-                    <td>
-                        <button class="approve-button">Approve</button>
-                        <button class="reject-button">Reject</button>
-                    </td>
-                </tr>
-                <!-- Add more rows for other VM applications -->
+                {% endfor %}
             </tbody>
         </table>
     </div>
+
+    <script>
+        // Add event listeners for approve and reject buttons
+        {% for application in applications %}
+        document.getElementById('approve-{{ application.id }}').addEventListener('click', function() {
+            // Handle approve action for application ID: {{ application.id }}
+        });
+
+        document.getElementById('reject-{{ application.id }}').addEventListener('click', function() {
+            // Handle reject action for application ID: {{ application.id }}
+        });
+        {% endfor %}
+    </script>
 </body>
 </html>

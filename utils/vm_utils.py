@@ -15,7 +15,7 @@ class VirtualMachine:
         """
         self.conn = libvirt.open()
 
-    def create(self, name, memory=512, vcpu=1, disk_size=30, mac_address=None, ip_address=None, port=8080, sys='windows'):
+    def create(self, name, memory=512, vcpu=1, disk_size=30, mac_address=None, ip_address=None, port=None, desk_username='administrator', desk_password='', sys='windows10'):
         """
         创建虚拟机。
 
@@ -40,9 +40,9 @@ class VirtualMachine:
             mac = ':'.join(['52'] + [f'{random.randint(0x00, 0xff):02x}' for _ in range(5)])
 
         # 根据操作系统选择镜像路径
-        if sys == 'windows':
+        if sys == 'windows10':
             image_path = '/var/lib/libvirt/images/windows.iso'  # Windows 镜像文件路径
-        elif sys == 'linux':
+        elif sys == 'windows7':
             image_path = '/var/lib/libvirt/images/linux.iso'  # Linux 镜像文件路径
         else:
             raise ValueError("Invalid operating system. Supported values are 'windows' and 'linux'.")
@@ -54,6 +54,9 @@ class VirtualMachine:
         if not os.path.exists(os.path.dirname(disk_path)):
             os.makedirs(os.path.dirname(disk_path))
 
+        # 生成随机端口
+        port = random.randint(1024, 65535)
+
         # ip配置
         ip_conf = f"<listen type='network' address='{ip_address}' port='{port}'/>" if ip_address and port else ''
 
@@ -62,7 +65,9 @@ class VirtualMachine:
 
         # 创建虚拟机并返回虚拟机对象
         domain = self.conn.createXML(xml_desc, 0)
-        return domain
+
+        ip = self.get_vm_ip_address(domain)
+        return
 
     def connect_rdp(self, name):
         """
@@ -165,3 +170,36 @@ class VirtualMachine:
         else:
             print("虚拟机正在运行中，无法调整配置。")
             return False
+
+    def get_vm_ip_address(self, vm):
+        """
+        获取虚拟机的IP地址。
+
+        Args:
+            vm (libvirt.virDomain): 虚拟机对象。
+
+        Returns:
+            str: 虚拟机的IP地址，如果无法获取则返回 None。
+        """
+        # 获取虚拟机的 XML 描述
+        xml_desc = vm.XMLDesc()
+
+        # 解析 XML 描述，提取网络接口配置信息
+        import xml.etree.ElementTree as ET
+        tree = ET.fromstring(xml_desc)
+        interfaces = tree.findall('.//devices/interface')
+
+        for interface in interfaces:
+            mac_element = interface.find('mac')
+            mac_address = mac_element.get('address')
+
+            # 获取IP地址
+            network_element = interface.find('source').get('network')
+            network = vm._conn.networkLookupByName(network_element)
+            lease = network.DHCPLeases(mac_address)
+
+            if lease:
+                ip_address = lease[0]['ipaddr']
+                return ip_address
+
+        return None

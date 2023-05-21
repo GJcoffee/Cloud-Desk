@@ -101,14 +101,14 @@ def apply_vm():
     if is_vm_limit_reached(username):
         return jsonify({'message': 'You have reached the maximum limit of virtual machines.'}), 400
     vm_name = request.form['vm_name']
-    username = request.form['username']
-    password = request.form['password']
+    desk_username = request.form['desk_username']
+    desk_password = request.form['desk_password']
     memory = int(request.form['memory'])
     vcpu = int(request.form['vcpu'])
     disk_size = int(request.form['disk_size'])
     os = request.form['os']
 
-    application = DesktopApplication(vm_name=vm_name, username=username, password=password, memory=memory, vcpu=vcpu, disk_size=disk_size, os=os)
+    application = DesktopApplication(vm_name=vm_name, username=username, desk_username=desk_username, desk_password=desk_password, memory=memory, vcpu=vcpu, disk_size=disk_size, os=os)
     db.session.add(application)
     db.session.commit()
     return jsonify({'message': 'Desktop application submitted successfully.'}), 200
@@ -117,11 +117,11 @@ def apply_vm():
 @vm_bp.route('/approve', methods=['POST'])
 def approve_vm():
     data = request.get_json()
-    user_id = data.get('user_id')
+    user_name = data.get('user_name')
     vm_name = data.get('vm_name')
 
     # 查询用户
-    user = User.query.get(user_id)
+    user = User.query.get(user_name)
     if not user:
         return jsonify({'status': 'error', 'message': 'User not found'})
 
@@ -130,9 +130,21 @@ def approve_vm():
     if current_vms >= 3:
         return jsonify({'status': 'error', 'message': 'User has reached maximum number of virtual machines'})
 
-    # 创建虚拟机
-    vm = VirtualMachine(name=vm_name, user_id=user_id)
-    db.session.add(vm)
-    db.session.commit()
+    # 向agent请求创建虚拟机
+    response = requests.post('http://agent/create_vm', data={
+        'vm_name': data.get('vm_name'),
+        'memory': data.get('memory'),
+        'vcpu': data.get('vcpu'),
+        'disk_size': data.get('disk_size'),
+        'mac_address': data.get('mac_address'),
+        'ip_address': data.get('ip_address'),
+        'port': data.get('port', ''),
+        'os': data.get('os')
+    })
+    if response.status_code == 200:
+        # 创建虚拟机
+        vm = VirtualMachine(name=vm_name, user_id=user_id)
+        db.session.add(vm)
+        db.session.commit()
 
     return jsonify({'status': 'ok', 'message': 'Virtual machine created'})

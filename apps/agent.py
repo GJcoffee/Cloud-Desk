@@ -14,14 +14,15 @@ def create_vm():
     创建虚拟机的路由接口
     """
     # 获取请求参数
-    vm_name = request.form.get('vm_name')
-    memory = request.form.get('memory')
-    vcpu = request.form.get('vcpu')
-    disk_size = request.form.get('disk_size')
-    mac_address = request.form.get('mac_address')
-    ip_address = request.form.get('ip_address')
-    port = request.form.get('port')
-    os = request.form.get('os')
+    data = request.get_json()
+    vm_name = data.get('vm_name')
+    memory = data.get('memory')
+    vcpu = data.get('vcpu')
+    disk_size = data.get('disk_size')
+    mac_address = data.get('mac_address')
+    ip_address = data.get('ip_address')
+    port = data.get('port')
+    os = data.get('os')
 
     # 调用 KVM 类中的创建虚拟机方法
     kvm.create(vm_name, memory, vcpu, disk_size, mac_address, ip_address, port, os)
