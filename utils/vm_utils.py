@@ -3,7 +3,7 @@ import libvirt
 import xml.etree.ElementTree as ET
 import random
 from conf.setting import vm_conf
-from utils.network import generate_random_ip
+# from utils.network import generate_random_ip
 
 
 class VirtualMachine:
@@ -14,9 +14,9 @@ class VirtualMachine:
         Args:
             name (str): 虚拟机名称
         """
-        self.conn = libvirt.open()
+        # self.conn = libvirt.open()
 
-    def create(self, name, memory=512, vcpu=1, disk_size=30, mac_address=None, ip_address=None, port=None,
+    def create(self, name, memory=4, vcpu=2, disk_size=30, mac_address=None, ip_address='172.16.0.1', port=None,
                sys='windows10'):
         """
         创建虚拟机。
@@ -60,41 +60,69 @@ class VirtualMachine:
         port = port if port else random.randint(1024, 65535)
 
         # ip配置
-        ip_address = ip_address if ip_address else generate_random_ip()
+        # ip_address = ip_address if ip_address else generate_random_ip()
         ip_conf = f"<listen type='network' address='{ip_address}' port='{port}'/>" if ip_address and port else ''
 
         # 定义虚拟机的 XML 描述
-        print(vm_conf)
-        xml_desc = f"""
+        xml_desc = """
 <domain type='kvm'>
-    <name>{str(name)}</name>
-    <memory unit='KiB'>{str(memory * 1024)}</memory>
-    <vcpu placement='static'>{str(vcpu)}</vcpu>
+    <name>test</name>
+    <memory unit='KiB'>4194304</memory>
+    <vcpu placement='static'>2</vcpu>
     <devices>
         <disk type='file' device='disk'>
             <driver name='qemu' type='qcow2'/>
-            <source file='{str(disk_path)}'/>
+            <source file='/var/lib/libvirt/VM/test/test.qcow2'/>
             <target dev='vda' bus='virtio'/>
             <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
-            <driver name='qemu' type='qcow2' size='{str(disk_size)}'/>
+            <driver name='qemu' type='qcow2' size='32212254720'/>
         </disk>
         <interface type='bridge'>
-            <mac address='{str(mac)}'/>
+            <mac address='52:f0:2e:1e:ff:12'/>
             <model type='virtio'/>
             <source bridge='br0'/>
             <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
-            {str(ip_conf)}
+            <listen type='network' address='172.16.0.1' port='26991'/>
         </interface>
         <disk type='file' device='cdrom'>
             <driver name='qemu' type='raw'/>
-            <source file='{str(image_path)}'/>
+            <source file='/var/lib/libvirt/images/windows.iso'/>
             <target dev='vdb' bus='virtio'/>
             <readonly/>
             <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
         </disk>
     </devices>
 </domain>"""
-        print(xml_desc)
+# f"""
+# <domain type='kvm'>
+#     <name>{str(name)}</name>
+#     <memory unit='KiB'>{str(memory * 1024* 1024)}</memory>
+#     <vcpu placement='static'>{str(vcpu)}</vcpu>
+#     <devices>
+#         <disk type='file' device='disk'>
+#             <driver name='qemu' type='qcow2'/>
+#             <source file='{str(disk_path)}'/>
+#             <target dev='vda' bus='virtio'/>
+#             <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+#             <driver name='qemu' type='qcow2' size='{str(disk_size)}'/>
+#         </disk>
+#         <interface type='bridge'>
+#             <mac address='{str(mac)}'/>
+#             <model type='virtio'/>
+#             <source bridge='br0'/>
+#             <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+#             {str(ip_conf)}
+#         </interface>
+#         <disk type='file' device='cdrom'>
+#             <driver name='qemu' type='raw'/>
+#             <source file='{str(image_path)}'/>
+#             <target dev='vdb' bus='virtio'/>
+#             <readonly/>
+#             <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+#         </disk>
+#     </devices>
+# </domain>"""
+
         创建虚拟机并返回虚拟机对象
         domain = self.conn.createXML(xml_desc, 0)
 
@@ -245,4 +273,3 @@ class VirtualMachine:
                 return ip_address
 
         return None
-
